@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenBasket – Fresh Groceries</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d7a3a;
+    --green-light: #4caf50;
+    --green-dark: #1a4f24;
+    --lime: #a8e063;
+    --cream: #f9f5ec;
+    --orange: #ff6b35;
+    --yellow: #ffd166;
+    --dark: #1a1a2e;
+    --text: #2c2c2c;
+    --muted: #777;
+    --white: #fff;
+    --shadow: 0 8px 32px rgba(45,122,58,.12);
+    --r: 18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden;}
+
+  /* CURSOR */
+  .cursor{position:fixed;width:16px;height:16px;border-radius:50%;background:var(--green-light);pointer-events:none;z-index:9999;transition:transform .12s ease;mix-blend-mode:multiply;}
+  .cursor-f{position:fixed;width:38px;height:38px;border-radius:50%;border:2px solid var(--green);pointer-events:none;z-index:9998;opacity:.45;}
+  @media(hover:none){.cursor,.cursor-f{display:none;}}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(249,245,236,.93);backdrop-filter:blur(18px);border-bottom:1.5px solid rgba(45,122,58,.1);transition:box-shadow .3s;}
+  nav.scrolled{box-shadow:0 4px 28px rgba(45,122,58,.14);}
+  .nav-in{max-width:1400px;margin:auto;padding:0 24px;display:flex;align-items:center;height:68px;gap:12px;}
+  .logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--green-dark);text-decoration:none;display:flex;align-items:center;gap:7px;flex-shrink:0;}
+  .logo-leaf{display:inline-block;animation:spin 7s linear infinite;}
+  @keyframes spin{100%{transform:rotate(360deg)}}
+  .nav-cats{display:flex;gap:2px;margin-left:18px;flex:1;overflow:hidden;}
+  .nav-cats button{padding:6px 13px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-radius:30px;transition:all .25s;white-space:nowrap;}
+  .nav-cats button:hover,.nav-cats button.active{background:var(--green);color:#fff;transform:translateY(-1px);}
+  .nav-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  .nb{display:flex;align-items:center;gap:6px;padding:7px 15px;border-radius:30px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .25s;}
+  .nb-out{background:none;border:1.5px solid var(--green);color:var(--green);}
+  .nb-out:hover{background:var(--green);color:#fff;transform:translateY(-2px);}
+  .nb-solid{background:var(--green);color:#fff;}
+  .nb-solid:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,122,58,.35);}
+  .cart-wrap{position:relative;}
+  .cart-badge{position:absolute;top:-6px;right:-6px;width:19px;height:19px;background:var(--orange);color:#fff;font-size:10px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;animation:none;}
+  .cart-badge.bump{animation:bump .3s ease;}
+  @keyframes bump{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+  .ham{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:none;background:none;}
+  .ham span{width:22px;height:2px;background:var(--green-dark);border-radius:2px;transition:all .3s;display:block;}
+  .ham.open span:nth-child(1){transform:rotate(45deg) translate(5px,4px);}
+  .ham.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+  .ham.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-4px);}
+
+  /* MOBILE MENU */
+  .mob-menu{position:fixed;top:68px;left:0;width:100%;background:var(--cream);z-index:999;padding:16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 20px 40px rgba(0,0,0,.1);transform:translateY(-10px);opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.215,.61,.355,1);}
+  .mob-menu.open{transform:translateY(0);opacity:1;pointer-events:all;}
+  .mob-menu button{padding:12px 14px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);cursor:pointer;border-radius:10px;text-align:left;transition:background .2s;}
+  .mob-menu button:hover{background:rgba(45,122,58,.07);color:var(--green);}
+
+  /* HERO */
+  .hero{min-height:100vh;padding-top:68px;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#eef9f0 0%,#fdf9f0 55%,#f0f0f9 100%);}
+  .hero-bg{position:absolute;inset:0;pointer-events:none;}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.45;}
+  .blob1{width:550px;height:550px;background:radial-gradient(circle,#a8e063 0%,transparent 70%);top:-150px;right:-150px;animation:blobFloat 9s ease-in-out infinite;}
+  .blob2{width:420px;height:420px;background:radial-gradient(circle,#ffd166 0%,transparent 70%);bottom:-80px;left:-80px;animation:blobFloat 7s ease-in-out infinite;animation-delay:-3s;}
+  .blob3{width:320px;height:320px;background:radial-gradient(circle,#b2f0b5 0%,transparent 70%);top:40%;left:35%;animation:blobFloat 11s ease-in-out infinite;animation-delay:-6s;}
+  @keyframes blobFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(18px,-18px) scale(1.06)}}
+  .hero-in{max-width:1400px;margin:auto;padding:80px 24px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;z-index:1;width:100%;}
+  .hero-tag{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:rgba(45,122,58,.1);border-radius:30px;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:18px;}
+  .hero-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green-light);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  h1{font-family:'Playfair Display',serif;font-size:clamp(40px,5.5vw,74px);font-weight:900;line-height:1.05;color:var(--dark);margin-bottom:18px;}
+  h1 em{font-style:italic;color:var(--green);position:relative;display:inline-block;}
+  h1 em::after{content:'';position:absolute;bottom:-3px;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--green),var(--lime));border-radius:2px;}
+  .hero-desc{font-size:16px;color:var(--muted);line-height:1.75;margin-bottom:34px;max-width:460px;}
+  .hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
+  .cta{padding:15px 30px;border-radius:50px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .3s;position:relative;overflow:hidden;}
+  .cta-p{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;box-shadow:0 8px 28px rgba(45,122,58,.38);}
+  .cta-p::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.18);border-radius:50%;transform:translate(-50%,-50%);transition:width .4s,height .4s;}
+  .cta-p:hover::before{width:200px;height:200px;}
+  .cta-p:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(45,122,58,.48);}
+  .cta-s{background:#fff;color:var(--green-dark);border:2px solid rgba(45,122,58,.18);}
+  .cta-s:hover{border-color:var(--green);transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+  .hero-stats{display:flex;gap:28px;margin-top:36px;}
+  .stat-n{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--green-dark);}
+  .stat-l{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px;}
+  .hero-right{position:relative;}
+  .hi-wrap{position:relative;width:100%;aspect-ratio:1;max-width:480px;margin:auto;}
+  .hi-circle{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4f5d7,#f0fdf1);}
+  .fi{position:absolute;font-size:clamp(38px,5vw,66px);filter:drop-shadow(0 8px 14px rgba(0,0,0,.14));}
+  .fi1{top:8%;left:14%;animation:floatI 4s ease-in-out infinite;}
+  .fi2{top:4%;right:14%;animation:floatI 4s ease-in-out infinite;animation-delay:-1s;}
+  .fi3{bottom:14%;left:8%;animation:floatI 4s ease-in-out infinite;animation-delay:-2s;}
+  .fi4{bottom:8%;right:8%;animation:floatI 4s ease-in-out infinite;animation-delay:-.5s;}
+  .fi5{top:44%;left:3%;animation:floatI 4s ease-in-out infinite;animation-delay:-1.5s;}
+  .fi6{top:44%;right:3%;animation:floatI 4s ease-in-out infinite;animation-delay:-3s;}
+  @keyframes floatI{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .center-b{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(80px,14vw,136px);filter:drop-shadow(0 20px 36px rgba(45,122,58,.28));animation:floatC 5s ease-in-out infinite;}
+  @keyframes floatC{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-12px)}}
+
+  /* MAIN */
+  main{max-width:1400px;margin:auto;padding:0 24px 60px;}
+
+  /* SECTION HEAD */
+  .sh{text-align:center;margin-bottom:44px;padding-top:76px;}
+  .s-tag{display:inline-block;padding:5px 14px;background:rgba(45,122,58,.09);border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--green-dark);margin-bottom:10px;}
+  .s-title{font-family:'Playfair Display',serif;font-size:clamp(26px,4vw,44px);font-weight:900;color:var(--dark);margin-bottom:10px;}
+  .s-sub{font-size:14px;color:var(--muted);max-width:460px;margin:auto;line-height:1.65;}
+
+  /* CAT PILLS */
+  .cat-bar{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:36px;}
+  .cpill{padding:9px 20px;border:2px solid rgba(45,122,58,.18);background:#fff;border-radius:50px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:6px;}
+  .cpill:hover,.cpill.active{background:var(--green);border-color:var(--green);color:#fff;transform:translateY(-2px);box-shadow:0 6px 16px rgba(45,122,58,.28);}
+
+  /* PRODUCTS */
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
+  .pcard{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:all .35s cubic-bezier(.175,.885,.32,1.275);position:relative;}
+  .pcard:hover{transform:translateY(-8px) scale(1.018);box-shadow:0 22px 54px rgba(45,122,58,.19);}
+  .pcard.hidden{display:none;}
+  .pimg{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:68px;transition:transform .35s;}
+  .pcard:hover .pimg{transform:scale(1.07);}
+  .pbadge{position:absolute;top:11px;left:11px;padding:3px 9px;border-radius:18px;font-size:11px;font-weight:700;letter-spacing:.2px;z-index:2;}
+  .badge-organic{background:#e8f5e9;color:#2e7d32;}
+  .badge-sale{background:#fff3e0;color:#e65100;}
+  .badge-new{background:#e3f2fd;color:#1565c0;}
+  .badge-hot{background:#fce4ec;color:#c62828;}
+  .wbtn{position:absolute;top:11px;right:11px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.09);z-index:2;}
+  .wbtn:hover{transform:scale(1.22);}
+  .wbtn.liked{background:#fce4ec;}
+  .pinfo{padding:14px;}
+  .pname{font-weight:600;font-size:14px;margin-bottom:3px;color:var(--dark);}
+  .pwt{font-size:12px;color:var(--muted);margin-bottom:9px;}
+  .pbot{display:flex;align-items:center;justify-content:space-between;}
+  .pprice{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--green-dark);}
+  .pprice s{font-size:12px;font-family:'DM Sans',sans-serif;color:var(--muted);font-style:normal;}
+  .qc{display:flex;align-items:center;gap:7px;}
+  .qbtn{width:28px;height:28px;border-radius:50%;border:2px solid var(--green);background:none;color:var(--green);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-weight:700;}
+  .qbtn:hover{background:var(--green);color:#fff;transform:scale(1.12);}
+  .qnum{font-weight:700;font-size:14px;min-width:18px;text-align:center;}
+  .abtn{width:34px;height:34px;border-radius:50%;border:none;background:var(--green);color:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 4px 12px rgba(45,122,58,.28);}
+  .abtn:hover{background:var(--green-dark);transform:scale(1.16) rotate(90deg);box-shadow:0 6px 18px rgba(45,122,58,.4);}
+
+  /* FEATURES */
+  .features{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:56px;}
+  .fcard{background:#fff;border-radius:var(--r);padding:22px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);transition:all .3s;}
+  .fcard:hover{transform:translateY(-4px);box-shadow:0 16px 38px rgba(45,122,58,.14);}
+  .ficon{font-size:28px;width:52px;height:52px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ftit{font-weight:700;font-size:13px;color:var(--dark);margin-bottom:2px;}
+  .fdesc{font-size:12px;color:var(--muted);line-height:1.4;}
+
+  /* CART SIDEBAR */
+  .c-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:1100;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px);}
+  .c-overlay.open{opacity:1;pointer-events:all;}
+  .csidebar{position:fixed;top:0;right:0;width:390px;max-width:95vw;height:100vh;background:#fff;z-index:1101;transform:translateX(100%);transition:transform .4s cubic-bezier(.215,.61,.355,1);display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.12);}
+  .csidebar.open{transform:translateX(0);}
+  .c-head{padding:22px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;}
+  .c-head h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--dark);}
+  .xbtn{width:34px;height:34px;border-radius:50%;border:none;background:#f5f5f5;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:all .22s;}
+  .xbtn:hover{background:#e0e0e0;transform:rotate(90deg);}
+  .c-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+  .citem{display:flex;gap:11px;align-items:center;padding:11px;background:#f9f9f9;border-radius:12px;animation:slideIn .3s ease;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+  .ce{font-size:30px;width:46px;text-align:center;}
+  .ci-info{flex:1;}
+  .ci-name{font-weight:600;font-size:13px;color:var(--dark);}
+  .ci-price{font-size:12px;color:var(--green-dark);font-weight:700;margin-top:2px;}
+  .ci-qty{display:flex;align-items:center;gap:7px;margin-top:5px;}
+  .cqb{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--green);background:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--green);font-weight:700;}
+  .cqb:hover{background:var(--green);color:#fff;}
+  .rbtn{width:26px;height:26px;border-radius:50%;border:none;background:#ffebee;color:#c62828;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .rbtn:hover{background:#c62828;color:#fff;transform:scale(1.1);}
+  .c-foot{padding:18px;border-top:1px solid #f0f0f0;}
+  .c-total{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .c-total-l{font-size:14px;color:var(--muted);}
+  .c-total-v{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--green-dark);}
+  .chkbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;border:none;border-radius:50px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .3s;}
+  .chkbtn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,122,58,.4);}
+  .empty-c{text-align:center;padding:56px 20px;color:var(--muted);}
+  .empty-c .ec-ic{font-size:55px;margin-bottom:14px;opacity:.45;}
+
+  /* MODALS */
+  .moverlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:1200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px);}
+  .moverlay.open{display:flex;animation:fIn .3s ease;}
+  @keyframes fIn{from{opacity:0}to{opacity:1}}
+  .modal{background:#fff;border-radius:22px;width:100%;overflow:hidden;animation:sUp .38s cubic-bezier(.215,.61,.355,1);box-shadow:0 30px 80px rgba(0,0,0,.18);position:relative;}
+  @keyframes sUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+  /* AUTH */
+  .am{max-width:460px;}
+  .am-head{padding:30px 30px 22px;text-align:center;background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;}
+  .am-head .al{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:6px;}
+  .am-head p{opacity:.82;font-size:13px;}
+  .am-tabs{display:flex;border-bottom:1px solid #f0f0f0;}
+  .atab{flex:1;padding:14px;text-align:center;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;transition:all .3s;position:relative;}
+  .atab.active{color:var(--green);}
+  .atab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2.5px;background:var(--green);border-radius:2px;}
+  .am-body{padding:28px;}
+  .aform{display:none;flex-direction:column;gap:14px;}
+  .aform.active{display:flex;}
+  .ig{display:flex;flex-direction:column;gap:5px;}
+  .ig label{font-size:12px;font-weight:600;color:var(--muted);}
+  .ig input{padding:12px 14px;border:2px solid #eee;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;transition:all .3s;outline:none;}
+  .ig input:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(45,122,58,.07);}
+  .asub{padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;border:none;border-radius:50px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .3s;}
+  .asub:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(45,122,58,.38);}
+  .mxbtn{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .mxbtn:hover{background:rgba(255,255,255,.3);transform:rotate(90deg);}
+
+  /* PROFILE */
+  .pm{max-width:500px;}
+  .pm-head{padding:28px;background:linear-gradient(135deg,var(--green-dark),#1a6b2e);color:#fff;display:flex;gap:18px;align-items:center;}
+  .pav{width:66px;height:66px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:30px;border:3px solid rgba(255,255,255,.35);}
+  .pn{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
+  .pe{opacity:.78;font-size:12px;margin-top:2px;}
+  .pm-body{padding:20px;}
+  .pni{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:11px;cursor:pointer;transition:all .25s;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text);width:100%;}
+  .pni:hover{background:rgba(45,122,58,.06);color:var(--green);transform:translateX(4px);}
+  .pni .ic{font-size:18px;width:24px;text-align:center;}
+  .pni .ar{margin-left:auto;font-size:11px;color:var(--muted);}
+
+  /* ORDERS */
+  .om{max-width:580px;max-height:84vh;overflow:hidden;display:flex;flex-direction:column;}
+  .om-head{padding:22px 26px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;}
+  .om-head h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;}
+  .om-body{overflow-y:auto;flex:1;padding:18px 26px;display:flex;flex-direction:column;gap:14px;}
+  .ocard{border:1.5px solid #eee;border-radius:14px;overflow:hidden;transition:box-shadow .3s;}
+  .ocard:hover{box-shadow:0 8px 22px rgba(0,0,0,.08);}
+  .oc-head{padding:12px 14px;background:#f9f9f9;display:flex;justify-content:space-between;align-items:center;}
+  .oid{font-weight:700;font-size:13px;}
+  .ostatus{padding:3px 10px;border-radius:18px;font-size:11px;font-weight:700;}
+  .s-del{background:#e8f5e9;color:#2e7d32;}
+  .s-tr{background:#fff3e0;color:#e65100;}
+  .s-pr{background:#e3f2fd;color:#1565c0;}
+  .oc-body{padding:12px 14px;}
+  .oit{font-size:13px;color:var(--muted);margin-bottom:8px;}
+
+  /* ADDRESS */
+  .adm{max-width:480px;}
+  .adm-head{padding:22px 26px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;}
+  .adm-head h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;}
+  .adm-body{padding:22px 26px;}
+  .addr-card{border:2px solid #eee;border-radius:14px;padding:14px;cursor:pointer;transition:all .3s;position:relative;margin-bottom:10px;}
+  .addr-card.sel{border-color:var(--green);background:rgba(45,122,58,.03);}
+  .addr-card:hover{border-color:var(--green-light);}
+  .addr-type{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--green);margin-bottom:5px;}
+  .addr-txt{font-size:13px;color:var(--text);line-height:1.55;}
+  .addr-si{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:10px;}
+  .addr-card.sel .addr-si{background:var(--green);border-color:var(--green);color:#fff;}
+  .add-addr{width:100%;padding:12px;border:2px dashed rgba(45,122,58,.28);border-radius:14px;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--green);font-weight:600;transition:all .3s;margin-top:4px;}
+  .add-addr:hover{background:rgba(45,122,58,.05);border-color:var(--green);}
+
+  /* PAYMENT */
+  .paym{max-width:480px;}
+  .paym-head{padding:22px 26px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;}
+  .paym-head h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;}
+  .paym-body{padding:22px 26px;display:flex;flex-direction:column;gap:14px;}
+  .pmethods{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pmethod{padding:14px;border:2px solid #eee;border-radius:14px;cursor:pointer;transition:all .3s;text-align:center;}
+  .pmethod:hover,.pmethod.sel{border-color:var(--green);background:rgba(45,122,58,.04);}
+  .pm-ic{font-size:26px;margin-bottom:6px;}
+  .pm-nm{font-size:12px;font-weight:600;color:var(--dark);}
+  .pdiv{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;}
+  .pdiv::before,.pdiv::after{content:'';flex:1;height:1px;background:#eee;}
+  .cform{display:flex;flex-direction:column;gap:10px;}
+  .crow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .paybtn{padding:15px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;border:none;border-radius:50px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .3s;}
+  .paybtn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,122,58,.4);}
+  .osm{background:#f9f5ec;border-radius:14px;padding:14px;}
+  .osm-r{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .osm-r.tot{font-weight:700;font-size:15px;color:var(--dark);border-top:1px solid #e0d9cc;margin-top:7px;padding-top:9px;}
+
+  /* TOAST */
+  .twrap{position:fixed;bottom:28px;right:28px;z-index:2000;display:flex;flex-direction:column;gap:9px;pointer-events:none;}
+  .toast{padding:12px 18px;background:#fff;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.14);font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;animation:toastIn .35s ease;border-left:4px solid var(--green);pointer-events:all;}
+  .toast.err{border-color:var(--orange);}
+  @keyframes toastIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+
+  /* SUCCESS */
+  .soverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+  .soverlay.open{display:flex;animation:fIn .3s ease;}
+  .scard{background:#fff;border-radius:22px;padding:44px;text-align:center;max-width:400px;animation:bIn .45s cubic-bezier(.215,.61,.355,1);}
+  @keyframes bIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+  .sic{font-size:75px;margin-bottom:18px;animation:pop .5s .15s both;}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .stit{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--dark);margin-bottom:8px;}
+  .stxt{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:22px;}
+  .sbtn{padding:13px 36px;background:var(--green);color:#fff;border:none;border-radius:50px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .3s;}
+  .sbtn:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 8px 22px rgba(45,122,58,.38);}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:#f0f0f0;}
+  ::-webkit-scrollbar-thumb{background:var(--green-light);border-radius:3px;}
+
+  /* FOOTER */
+  footer{background:var(--green-dark);color:rgba(255,255,255,.78);padding:56px 24px 28px;margin-top:72px;}
+  .fi-inner{max-width:1400px;margin:auto;}
+  .ft{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:36px;margin-bottom:36px;}
+  .fb .logo{color:#fff;font-size:24px;margin-bottom:10px;display:inline-flex;}
+  .fb p{font-size:13px;line-height:1.65;opacity:.65;}
+  .fc h4{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;color:#fff;}
+  .fc a{display:block;font-size:12px;opacity:.65;margin-bottom:7px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .2s;}
+  .fc a:hover{opacity:1;}
+  .fbot{border-top:1px solid rgba(255,255,255,.1);padding-top:22px;display:flex;justify-content:space-between;font-size:12px;opacity:.55;flex-wrap:wrap;gap:6px;}
+
+  /* RESPONSIVE */
+  @media(max-width:1100px){
+    .features{grid-template-columns:repeat(2,1fr);}
+    .ft{grid-template-columns:1fr 1fr;}
+  }
+  @media(max-width:768px){
+    .nav-cats{display:none;}
+    .ham{display:flex;}
+    .hero-in{grid-template-columns:1fr;text-align:center;gap:28px;padding:36px 24px;}
+    .hero-desc,.hero-btns{margin-left:auto;margin-right:auto;}
+    .hero-btns{justify-content:center;}
+    .hero-stats{justify-content:center;}
+    .hero-right{order:-1;}
+    .features{grid-template-columns:1fr;}
+    .ft{grid-template-columns:1fr;}
+    .pgrid{grid-template-columns:repeat(auto-fill,minmax(165px,1fr));}
+    .csidebar{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-f" id="curf"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-in">
+    <a class="logo" href="#"><span class="logo-leaf">🌿</span>GreenBasket</a>
+    <div class="nav-cats">
+      <button class="active" onclick="filterCat(this,'all')">🛒 All</button>
+      <button onclick="filterCat(this,'vegetables')">🥦 Vegetables</button>
+      <button onclick="filterCat(this,'fruits')">🍎 Fruits</button>
+      <button onclick="filterCat(this,'dairy')">🥛 Dairy</button>
+      <button onclick="filterCat(this,'grains')">🌾 Grains</button>
+      <button onclick="filterCat(this,'beverages')">☕ Beverages</button>
+      <button onclick="filterCat(this,'snacks')">🍪 Snacks</button>
+    </div>
+    <div class="nav-actions">
+      <button class="nb nb-out" onclick="openM('orderM')">📦 Orders</button>
+      <button class="nb nb-out" id="authBtn" onclick="openM('authM')">👤 Login</button>
+      <button class="nb nb-solid cart-wrap" onclick="openCart()">🛒 Cart <span class="cart-badge" id="cbadge">0</span></button>
+    </div>
+    <button class="ham" id="ham" onclick="toggleMob()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mobMenu">
+  <button onclick="filterCat(null,'all');toggleMob()">🛒 All Products</button>
+  <button onclick="filterCat(null,'vegetables');toggleMob()">🥦 Vegetables</button>
+  <button onclick="filterCat(null,'fruits');toggleMob()">🍎 Fruits</button>
+  <button onclick="filterCat(null,'dairy');toggleMob()">🥛 Dairy</button>
+  <button onclick="filterCat(null,'grains');toggleMob()">🌾 Grains</button>
+  <button onclick="filterCat(null,'beverages');toggleMob()">☕ Beverages</button>
+  <button onclick="filterCat(null,'snacks');toggleMob()">🍪 Snacks</button>
+  <button onclick="openM('orderM');toggleMob()">📦 My Orders</button>
+  <button onclick="openM('authM');toggleMob()">👤 Login / Sign Up</button>
+  <button onclick="openM('addrM');toggleMob()">📍 Address</button>
+  <button onclick="openM('payM');toggleMob()">💳 Payment</button>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+  <div class="hero-in">
+    <div>
+      <div class="hero-tag">🌱 100% Fresh & Organic</div>
+      <h1>Fresh Groceries<br><em>Delivered</em><br>to Your Door</h1>
+      <p class="hero-desc">Shop premium vegetables, fruits, dairy & more — all sourced from local farmers. Same-day delivery in under 2 hours!</p>
+      <div class="hero-btns">
+        <button class="cta cta-p" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">🛒 Shop Now</button>
+        <button class="cta cta-s" onclick="openM('authM')">Sign Up Free →</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Products</div></div>
+        <div><div class="stat-n">50K+</div><div class="stat-l">Customers</div></div>
+        <div><div class="stat-n">2hr</div><div class="stat-l">Delivery</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hi-wrap">
+        <div class="hi-circle"></div>
+        <span class="fi fi1">🥕</span>
+        <span class="fi fi2">🍋</span>
+        <span class="fi fi3">🥬</span>
+        <span class="fi fi4">🍓</span>
+        <span class="fi fi5">🥑</span>
+        <span class="fi fi6">🍊</span>
+        <span class="center-b">🧺</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+  <!-- FEATURES -->
+  <div class="features">
+    <div class="fcard"><div class="ficon">🚚</div><div><div class="ftit">Free Delivery</div><div class="fdesc">On orders above ₹499</div></div></div>
+    <div class="fcard"><div class="ficon">🌿</div><div><div class="ftit">100% Organic</div><div class="fdesc">Certified fresh produce</div></div></div>
+    <div class="fcard"><div class="ficon">⚡</div><div><div class="ftit">2-Hour Delivery</div><div class="fdesc">Express delivery available</div></div></div>
+    <div class="fcard"><div class="ficon">🔄</div><div><div class="ftit">Easy Returns</div><div class="fdesc">7-day return policy</div></div></div>
+  </div>
+
+  <!-- SHOP -->
+  <div class="sh" id="shop">
+    <div class="s-tag">🛍️ Our Products</div>
+    <h2 class="s-title">Fresh From the Farm</h2>
+    <p class="s-sub">Handpicked every morning for your table</p>
+  </div>
+
+  <div class="cat-bar">
+    <button class="cpill active" onclick="filterCat(this,'all')">🌈 All</button>
+    <button class="cpill" onclick="filterCat(this,'vegetables')">🥦 Vegetables</button>
+    <button class="cpill" onclick="filterCat(this,'fruits')">🍎 Fruits</button>
+    <button class="cpill" onclick="filterCat(this,'dairy')">🥛 Dairy</button>
+    <button class="cpill" onclick="filterCat(this,'grains')">🌾 Grains</button>
+    <button class="cpill" onclick="filterCat(this,'beverages')">☕ Beverages</button>
+    <button class="cpill" onclick="filterCat(this,'snacks')">🍪 Snacks</button>
+  </div>
+
+  <div class="pgrid" id="pgrid"></div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fi-inner">
+    <div class="ft">
+      <div class="fb">
+        <div class="logo">🌿 GreenBasket</div>
+        <p>India's freshest grocery delivery. From farm to your table in under 2 hours. Shop smart, eat fresh, live green.</p>
+      </div>
+      <div class="fc"><h4>Quick Links</h4>
+        <a onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Shop</a>
+        <a onclick="openM('orderM')">My Orders</a>
+        <a onclick="openM('addrM')">Addresses</a>
+        <a onclick="openM('payM')">Payment</a>
+      </div>
+      <div class="fc"><h4>Categories</h4>
+        <a onclick="filterCat(null,'vegetables')">Vegetables</a>
+        <a onclick="filterCat(null,'fruits')">Fruits</a>
+        <a onclick="filterCat(null,'dairy')">Dairy</a>
+        <a onclick="filterCat(null,'grains')">Grains</a>
+      </div>
+      <div class="fc"><h4>Support</h4>
+        <a>Help Center</a><a>Track Order</a><a>Return Policy</a><a>Contact Us</a>
+      </div>
+    </div>
+    <div class="fbot"><span>© 2024 GreenBasket. All rights reserved.</span><span>🌱 Made for fresh living</span></div>
+  </div>
+</footer>
+
+<!-- CART SIDEBAR -->
+<div class="c-overlay" id="cOverlay" onclick="closeCart()"></div>
+<div class="csidebar" id="csidebar">
+  <div class="c-head"><h3>🛒 Your Basket</h3><button class="xbtn" onclick="closeCart()">✕</button></div>
+  <div class="c-body" id="cbody"></div>
+  <div class="c-foot">
+    <div class="c-total"><span class="c-total-l">Total Amount</span><span class="c-total-v" id="ctotal">₹0</span></div>
+    <button class="chkbtn" onclick="proceedChk()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="moverlay" id="authM">
+  <div class="modal am">
+    <div class="am-head">
+      <div class="al">🌿 GreenBasket</div>
+      <p>Your daily fresh grocery companion</p>
+    </div>
+    <div class="am-tabs">
+      <button class="atab active" onclick="switchTab('login')">Sign In</button>
+      <button class="atab" onclick="switchTab('register')">Create Account</button>
+    </div>
+    <div class="am-body">
+      <form class="aform active" id="loginF" onsubmit="doLogin(event)">
+        <div class="ig"><label>Email</label><input type="email" placeholder="you@example.com" id="le" required></div>
+        <div class="ig"><label>Password</label><input type="password" placeholder="••••••••" id="lp" required></div>
+        <button type="submit" class="asub">Sign In →</button>
+      </form>
+      <form class="aform" id="regF" onsubmit="doReg(event)">
+        <div class="ig"><label>Full Name</label><input type="text" placeholder="Your Name" id="rn" required></div>
+        <div class="ig"><label>Email</label><input type="email" placeholder="you@example.com" id="re" required></div>
+        <div class="ig"><label>Phone</label><input type="tel" placeholder="+91 9876543210" id="rph"></div>
+        <div class="ig"><label>Password</label><input type="password" placeholder="••••••••" id="rp" required></div>
+        <button type="submit" class="asub">Create Account →</button>
+      </form>
+    </div>
+    <button class="mxbtn" onclick="closeM('authM')">✕</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="moverlay" id="profM">
+  <div class="modal pm">
+    <div class="pm-head">
+      <div class="pav">👤</div>
+      <div><div class="pn" id="pName">Guest</div><div class="pe" id="pEmail">Not signed in</div></div>
+    </div>
+    <div class="pm-body">
+      <button class="pni" onclick="closeM('profM');openM('orderM')"><span class="ic">📦</span>My Orders<span class="ar">›</span></button>
+      <button class="pni" onclick="closeM('profM');openM('addrM')"><span class="ic">📍</span>Saved Addresses<span class="ar">›</span></button>
+      <button class="pni" onclick="closeM('profM');openM('payM')"><span class="ic">💳</span>Payment Methods<span class="ar">›</span></button>
+      <button class="pni" onclick="doLogout()"><span class="ic">🚪</span>Sign Out<span class="ar">›</span></button>
+    </div>
+    <button class="mxbtn" onclick="closeM('profM')">✕</button>
+  </div>
+</div>
+
+<!-- ORDERS MODAL -->
+<div class="moverlay" id="orderM">
+  <div class="modal om">
+    <div class="om-head"><h3>📦 My Orders</h3><button class="xbtn" onclick="closeM('orderM')">✕</button></div>
+    <div class="om-body">
+      <div class="ocard">
+        <div class="oc-head"><span class="oid">#GB-2024-001</span><span class="ostatus s-del">✓ Delivered</span></div>
+        <div class="oc-body"><div class="oit">Spinach, Tomatoes, Carrots, Onions</div><div style="display:flex;justify-content:space-between"><b>₹348</b><span style="font-size:12px;color:var(--muted)">15 Jan 2024</span></div></div>
+      </div>
+      <div class="ocard">
+        <div class="oc-head"><span class="oid">#GB-2024-002</span><span class="ostatus s-tr">🚚 Out for Delivery</span></div>
+        <div class="oc-body"><div class="oit">Mangoes, Milk, Wheat Flour</div><div style="display:flex;justify-content:space-between"><b>₹520</b><span style="font-size:12px;color:var(--muted)">Today</span></div></div>
+      </div>
+      <div id="newOrders"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADDRESS MODAL -->
+<div class="moverlay" id="addrM">
+  <div class="modal adm">
+    <div class="adm-head"><h3>📍 Saved Addresses</h3><button class="xbtn" onclick="closeM('addrM')">✕</button></div>
+    <div class="adm-body">
+      <div class="addr-card sel" onclick="selAddr(this)">
+        <div class="addr-si">✓</div>
+        <div class="addr-type">🏠 Home</div>
+        <div class="addr-txt">42, Green Park Colony<br>Sector 15, New Delhi — 110058<br>📞 +91 9876543210</div>
+      </div>
+      <div class="addr-card" onclick="selAddr(this)">
+        <div class="addr-si"></div>
+        <div class="addr-type">🏢 Work</div>
+        <div class="addr-txt">Tech Hub, Block B, Floor 3<br>Cyber City, Gurugram — 122002<br>📞 +91 9876543210</div>
+      </div>
+      <button class="add-addr" onclick="toast('📍 Add address feature coming soon!')">+ Add New Address</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="moverlay" id="payM">
+  <div class="modal paym">
+    <div class="paym-head"><h3>💳 Payment</h3><button class="xbtn" onclick="closeM('payM')">✕</button></div>
+    <div class="paym-body">
+      <div class="osm">
+        <div class="osm-r"><span>Subtotal</span><span id="pmSub">₹0</span></div>
+        <div class="osm-r"><span>Delivery</span><span>₹40</span></div>
+        <div class="osm-r"><span>Discount</span><span style="color:var(--green)">-₹20</span></div>
+        <div class="osm-r tot"><span>Total</span><span id="pmTot">₹20</span></div>
+      </div>
+      <div class="pmethods">
+        <div class="pmethod sel" onclick="selPay(this)"><div class="pm-ic">💳</div><div class="pm-nm">Card</div></div>
+        <div class="pmethod" onclick="selPay(this)"><div class="pm-ic">📱</div><div class="pm-nm">UPI</div></div>
+        <div class="pmethod" onclick="selPay(this)"><div class="pm-ic">🏦</div><div class="pm-nm">Net Banking</div></div>
+        <div class="pmethod" onclick="selPay(this)"><div class="pm-ic">💵</div><div class="pm-nm">Cash on Delivery</div></div>
+      </div>
+      <div class="pdiv">or pay by card</div>
+      <div class="cform">
+        <div class="ig"><label>Card Number</label><input type="text" placeholder="1234 5678 9012 3456" maxlength="19"></div>
+        <div class="crow">
+          <div class="ig"><label>Expiry</label><input type="text" placeholder="MM/YY"></div>
+          <div class="ig"><label>CVV</label><input type="text" placeholder="123" maxlength="3"></div>
+        </div>
+        <div class="ig"><label>Name on Card</label><input type="text" placeholder="Your Name"></div>
+      </div>
+      <button class="paybtn" onclick="placeOrder()">🎉 Place Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="twrap" id="twrap"></div>
+
+<!-- SUCCESS -->
+<div class="soverlay" id="soverlay">
+  <div class="scard">
+    <div class="sic">🎉</div>
+    <div class="stit">Order Placed!</div>
+    <p class="stxt">Your fresh groceries are on their way! Expected delivery in 2 hours. Track your order in the Orders section.</p>
+    <button class="sbtn" onclick="closeSuccess()">Continue Shopping</button>
+  </div>
+</div>
+
+<script>
+// DATA
+const products=[
+  {id:1,name:'Fresh Spinach',e:'🥬',cat:'vegetables',price:45,mrp:60,wt:'250g',bg:'#e8f5e9',badge:'organic'},
+  {id:2,name:'Red Tomatoes',e:'🍅',cat:'vegetables',price:39,mrp:55,wt:'500g',bg:'#fce4ec',badge:'hot'},
+  {id:3,name:'Carrots',e:'🥕',cat:'vegetables',price:35,mrp:50,wt:'500g',bg:'#fff3e0',badge:'organic'},
+  {id:4,name:'Broccoli',e:'🥦',cat:'vegetables',price:75,mrp:100,wt:'300g',bg:'#e8f5e9',badge:'new'},
+  {id:5,name:'Bell Peppers',e:'🫑',cat:'vegetables',price:65,mrp:80,wt:'3 pcs',bg:'#e0f2f1',badge:'organic'},
+  {id:6,name:'Potatoes',e:'🥔',cat:'vegetables',price:28,mrp:40,wt:'1kg',bg:'#fff8e1',badge:null},
+  {id:7,name:'Onions',e:'🧅',cat:'vegetables',price:32,mrp:45,wt:'1kg',bg:'#fce4ec',badge:null},
+  {id:8,name:'Cucumber',e:'🥒',cat:'vegetables',price:22,mrp:35,wt:'2 pcs',bg:'#e8f5e9',badge:'organic'},
+  {id:9,name:'Alphonso Mango',e:'🥭',cat:'fruits',price:249,mrp:320,wt:'6 pcs',bg:'#fff3e0',badge:'hot'},
+  {id:10,name:'Strawberries',e:'🍓',cat:'fruits',price:129,mrp:180,wt:'250g',bg:'#fce4ec',badge:'new'},
+  {id:11,name:'Bananas',e:'🍌',cat:'fruits',price:49,mrp:65,wt:'6 pcs',bg:'#fff9c4',badge:'organic'},
+  {id:12,name:'Green Apples',e:'🍏',cat:'fruits',price:149,mrp:200,wt:'4 pcs',bg:'#e8f5e9',badge:'organic'},
+  {id:13,name:'Watermelon',e:'🍉',cat:'fruits',price:89,mrp:120,wt:'1 pc',bg:'#fce4ec',badge:'sale'},
+  {id:14,name:'Grapes',e:'🍇',cat:'fruits',price:99,mrp:130,wt:'500g',bg:'#ede7f6',badge:null},
+  {id:15,name:'Full Cream Milk',e:'🥛',cat:'dairy',price:65,mrp:72,wt:'1L',bg:'#e3f2fd',badge:null},
+  {id:16,name:'Fresh Paneer',e:'🧀',cat:'dairy',price:89,mrp:110,wt:'200g',bg:'#fff3e0',badge:'organic'},
+  {id:17,name:'Greek Yogurt',e:'🍶',cat:'dairy',price:75,mrp:90,wt:'400g',bg:'#fce4ec',badge:'new'},
+  {id:18,name:'Salted Butter',e:'🧈',cat:'dairy',price:55,mrp:65,wt:'100g',bg:'#fff9c4',badge:null},
+  {id:19,name:'Basmati Rice',e:'🍚',cat:'grains',price:189,mrp:240,wt:'1kg',bg:'#fff8e1',badge:'organic'},
+  {id:20,name:'Wheat Flour',e:'🌾',cat:'grains',price:65,mrp:85,wt:'1kg',bg:'#fff3e0',badge:null},
+  {id:21,name:'Rolled Oats',e:'🥣',cat:'grains',price:129,mrp:160,wt:'500g',bg:'#e8f5e9',badge:'new'},
+  {id:22,name:'Green Tea',e:'🍵',cat:'beverages',price:149,mrp:180,wt:'25 bags',bg:'#e8f5e9',badge:'organic'},
+  {id:23,name:'Orange Juice',e:'🍊',cat:'beverages',price:89,mrp:120,wt:'1L',bg:'#fff3e0',badge:'new'},
+  {id:24,name:'Coconut Water',e:'🥥',cat:'beverages',price:49,mrp:65,wt:'500ml',bg:'#e0f7fa',badge:'organic'},
+  {id:25,name:'Trail Mix',e:'🥜',cat:'snacks',price:199,mrp:260,wt:'200g',bg:'#fff3e0',badge:'hot'},
+  {id:26,name:'Dark Chocolate',e:'🍫',cat:'snacks',price:149,mrp:180,wt:'100g',bg:'#f3e5f5',badge:null},
+  {id:27,name:'Rice Crackers',e:'🫙',cat:'snacks',price:79,mrp:99,wt:'150g',bg:'#fff9c4',badge:null},
+];
+
+let cart={}, user=null;
+
+function badgeLbl(b){return{organic:'🌿 Organic',sale:'🏷️ Sale',new:'✨ New',hot:'🌶️ Hot'}[b]||'';}
+function badgeClass(b){return{organic:'badge-organic',sale:'badge-sale',new:'badge-new',hot:'badge-hot'}[b]||'';}
+
+function render(){
+  const g=document.getElementById('pgrid');
+  g.innerHTML='';
+  products.forEach(p=>{
+    const qty=cart[p.id]?.qty||0;
+    const d=document.createElement('div');
+    d.className='pcard';d.dataset.cat=p.cat;d.dataset.id=p.id;
+    d.innerHTML=`
+      ${p.badge?`<span class="pbadge ${badgeClass(p.badge)}">${badgeLbl(p.badge)}</span>`:''}
+      <button class="wbtn" onclick="toggleW(this)" title="Wishlist">🤍</button>
+      <div class="pimg" style="background:${p.bg}">${p.e}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="pwt">${p.wt}</div>
+        <div class="pbot">
+          <div class="pprice">₹${p.price} <s>₹${p.mrp}</s></div>
+          ${qty>0?`<div class="qc"><button class="qbtn" onclick="chgQty(${p.id},-1)">−</button><span class="qnum">${qty}</span><button class="qbtn" onclick="chgQty(${p.id},1)">+</button></div>`
+          :`<button class="abtn" onclick="addCart(${p.id})">+</button>`}
+        </div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+render();
+
+function addCart(id){
+  const p=products.find(x=>x.id===id);
+  if(!cart[id]) cart[id]={...p,qty:0};
+  cart[id].qty++;
+  updateBadge();render();applyFilter();
+  toast(`🛒 ${p.name} added!`);
+  const b=document.getElementById('cbadge');
+  b.className='cart-badge bump';setTimeout(()=>b.className='cart-badge',300);
+}
+
+function chgQty(id,d){
+  if(!cart[id]) return;
+  cart[id].qty+=d;
+  if(cart[id].qty<=0) delete cart[id];
+  updateBadge();render();applyFilter();
+  if(document.getElementById('csidebar').classList.contains('open')) renderCart();
+}
+
+function updateBadge(){
+  document.getElementById('cbadge').textContent=Object.values(cart).reduce((a,i)=>a+i.qty,0);
+}
+
+let activeCat='all';
+function filterCat(btn,cat){
+  activeCat=cat;
+  document.querySelectorAll('.cpill,.nav-cats button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  applyFilter();
+}
+function applyFilter(){
+  document.querySelectorAll('.pcard').forEach(c=>{
+    c.classList.toggle('hidden',activeCat!=='all'&&c.dataset.cat!==activeCat);
+  });
+}
+
+function openCart(){
+  document.getElementById('csidebar').classList.add('open');
+  document.getElementById('cOverlay').classList.add('open');
+  renderCart();
+}
+function closeCart(){
+  document.getElementById('csidebar').classList.remove('open');
+  document.getElementById('cOverlay').classList.remove('open');
+}
+function renderCart(){
+  const c=document.getElementById('cbody');
+  const items=Object.values(cart);
+  if(!items.length){
+    c.innerHTML=`<div class="empty-c"><div class="ec-ic">🧺</div><p>Your basket is empty!</p><p style="font-size:12px;margin-top:5px">Add some fresh items to get started.</p></div>`;
+    document.getElementById('ctotal').textContent='₹0';return;
+  }
+  c.innerHTML=items.map(i=>`
+    <div class="citem">
+      <div class="ce">${i.e}</div>
+      <div class="ci-info">
+        <div class="ci-name">${i.name}</div>
+        <div class="ci-price">₹${i.price} × ${i.qty} = ₹${i.price*i.qty}</div>
+        <div class="ci-qty">
+          <button class="cqb" onclick="chgQty(${i.id},-1)">−</button>
+          <span>${i.qty}</span>
+          <button class="cqb" onclick="chgQty(${i.id},1)">+</button>
+        </div>
+      </div>
+      <button class="rbtn" onclick="removeItem(${i.id})">🗑</button>
+    </div>`).join('');
+  const tot=items.reduce((a,i)=>a+i.price*i.qty,0);
+  document.getElementById('ctotal').textContent=`₹${tot}`;
+}
+function removeItem(id){
+  delete cart[id];updateBadge();render();applyFilter();renderCart();
+  toast('Item removed','err');
+}
+function proceedChk(){
+  closeCart();
+  const tot=Object.values(cart).reduce((a,i)=>a+i.price*i.qty,0);
+  document.getElementById('pmSub').textContent=`₹${tot}`;
+  document.getElementById('pmTot').textContent=`₹${tot+40-20}`;
+  openM('payM');
+}
+
+// AUTH
+function switchTab(t){
+  document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('loginF').classList.toggle('active',t==='login');
+  document.getElementById('regF').classList.toggle('active',t==='register');
+}
+function doLogin(e){
+  e.preventDefault();
+  const em=document.getElementById('le').value;
+  user={name:em.split('@')[0],email:em};
+  updateAuth();closeM('authM');toast(`👋 Welcome back, ${user.name}!`);
+}
+function doReg(e){
+  e.preventDefault();
+  const n=document.getElementById('rn').value,em=document.getElementById('re').value;
+  user={name:n,email:em};
+  updateAuth();closeM('authM');toast(`🎉 Welcome, ${n}!`);
+}
+function doLogout(){
+  user=null;updateAuth();closeM('profM');toast('👋 Signed out');
+}
+function updateAuth(){
+  const b=document.getElementById('authBtn');
+  if(user){
+    b.textContent='👤 '+user.name.substring(0,9);
+    b.onclick=()=>{document.getElementById('pName').textContent=user.name;document.getElementById('pEmail').textContent=user.email;openM('profM');};
+  }else{
+    b.textContent='👤 Login';b.onclick=()=>openM('authM');
+  }
+}
+
+// ADDRESS
+function selAddr(c){
+  document.querySelectorAll('.addr-card').forEach(x=>{x.classList.remove('sel');x.querySelector('.addr-si').textContent='';});
+  c.classList.add('sel');c.querySelector('.addr-si').textContent='✓';toast('📍 Address selected!');
+}
+
+// PAYMENT
+function selPay(el){document.querySelectorAll('.pmethod').forEach(m=>m.classList.remove('sel'));el.classList.add('sel');}
+
+function placeOrder(){
+  const items=Object.values(cart);
+  if(items.length>0){
+    const list=items.map(i=>i.name).join(', ');
+    const tot=items.reduce((a,i)=>a+i.price*i.qty,0);
+    const d=document.createElement('div');
+    d.className='ocard';
+    d.innerHTML=`<div class="oc-head"><span class="oid">#GB-${Date.now().toString().slice(-5)}</span><span class="ostatus s-pr">⏳ Processing</span></div><div class="oc-body"><div class="oit">${list}</div><div style="display:flex;justify-content:space-between"><b>₹${tot+20}</b><span style="font-size:12px;color:var(--muted)">Just now</span></div></div>`;
+    document.getElementById('newOrders').prepend(d);
+  }
+  cart={};updateBadge();render();closeM('payM');
+  document.getElementById('soverlay').classList.add('open');
+}
+function closeSuccess(){document.getElementById('soverlay').classList.remove('open');}
+
+// WISHLIST
+function toggleW(b){b.classList.toggle('liked');b.textContent=b.classList.contains('liked')?'❤️':'🤍';toast(b.classList.contains('liked')?'❤️ Added to wishlist!':'Removed from wishlist');}
+
+// HAMBURGER
+function toggleMob(){const h=document.getElementById('ham'),m=document.getElementById('mobMenu');h.classList.toggle('open');m.classList.toggle('open');}
+
+// MODALS
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.moverlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// TOAST
+function toast(msg,t=''){
+  const w=document.getElementById('twrap'),el=document.createElement('div');
+  el.className='toast'+(t?` ${t}`:'');
+  el.innerHTML=`<span>${t==='err'?'⚠️':'✅'}</span> ${msg}`;
+  w.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(28px)';el.style.transition='.3s';setTimeout(()=>el.remove(),300);},2400);
+}
+
+// SCROLL NAV
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>20));
+
+// CURSOR
+const cur=document.getElementById('cur'),curf=document.getElementById('curf');
+let mx=0,my=0,fx=0,fy=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx-8+'px';cur.style.top=my-8+'px';
+});
+(function anim(){fx+=(mx-fx-19)*.12;fy+=(my-fy-19)*.12;curf.style.left=fx+'px';curf.style.top=fy+'px';requestAnimationFrame(anim);})();
+document.querySelectorAll('button,a,.pcard').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.style.transform='scale(2)');
+  el.addEventListener('mouseleave',()=>cur.style.transform='scale(1)');
+});
+</script>
+</body>
+</html>
